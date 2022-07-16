@@ -63,7 +63,6 @@ def clip_video(video_path: str,
     start_frame = start_second * fps
     end_frame = end_second * fps
 
-    # If the suffix of the video file is avi, then the encoding format is MJPG.
     if 'avi' in video_path.suffix:
         fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
     else:
