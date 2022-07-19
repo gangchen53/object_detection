@@ -83,3 +83,63 @@ def clip_video(video_path: str,
             break
 
         frame_counter += 1
+
+
+def concat_videos(videos_path: List[str],
+                  video_save_path: str,
+                  layout: Optional[Tuple[int, int]] = None,
+                  videos_title: Optional[List[str]] = None,
+                  ):
+    assert videos_path, 'Videos path list must not be None!'
+
+    if layout is None:
+        layout = (len(videos_path), 1)
+    elif isinstance(layout, list):
+        layout = tuple(layout)
+
+    if videos_title is None:
+        videos_title = ['video_' + str(i) for i in range(len(videos_path))]
+
+    cap_list = [cv2.VideoCapture(vid_path) for vid_path in videos_path]
+
+    num_frames = int(cap_list[0].get(cv2.CAP_PROP_FRAME_COUNT))
+    frame_width = int(cap_list[0].get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(cap_list[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
+    for cap in cap_list[1:]:
+        if num_frames != int(cap.get(cv2.CAP_PROP_FRAME_COUNT)):
+            raise 'The number of frames in all videos should be the same!'
+
+        if frame_width != int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)):
+            raise 'The width of frame in all videos should be the same!'
+
+        if frame_height != int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)):
+            raise 'The height of frame in all videos should be the same!'
+
+    fps = int(cap_list[0].get(cv2.CAP_PROP_FPS))
+    if 'avi' in Path(videos_path[0]).suffix:
+        fourcc = cv2.VideoWriter_fourcc('X', 'V', 'I', 'D')
+    else:
+        raise NotImplementedError
+
+    num_row = layout[0]
+    num_col = layout[1]
+    big_frame_height = int(frame_height * num_row)
+    big_frame_width = int(frame_width * num_col)
+    video_writer = cv2.VideoWriter(video_save_path, fourcc, fps, (big_frame_width, big_frame_height))
+
+    width_center = frame_width // 2
+    while True:
+        big_frame = np.empty((big_frame_height, big_frame_width, 3))
+
+        for i, (cap, vid_title) in enumerate(zip(cap_list, videos_title)):
+            ret, frame = cap.read()
+            if not ret:
+                print('Cannot receive frame (stream end?). Exiting ...\n')
+                return True
+            cv2.putText(frame, vid_title, (width_center, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 4, cv2.LINE_AA)
+
+            row = i // num_row
+            col = i % num_row
+            big_frame[col * frame_height: (col + 1) * frame_height, row * frame_width:(row + 1) * frame_width,
+            :] = frame
+        video_writer.write(big_frame.astype(np.uint8))
