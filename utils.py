@@ -1,14 +1,16 @@
-from tqdm import tqdm
-from typing import Optional
+import os
 from pathlib import Path
+from typing import Optional, List, Tuple
+
 import cv2
+from tqdm import tqdm
 
 
 def video2images(video_path: str,
                  images_dir: str,
                  image_name_prefix: Optional[str] = None,
                  interval_frames: int = 1,
-                 ):
+                 ) -> None:
     video_path = Path(video_path)
     images_dir = Path(images_dir)
     images_dir.mkdir(exist_ok=True, parents=True)
@@ -46,7 +48,7 @@ def clip_video(video_path: str,
                video_save_dir: str,
                start_second: int,
                end_second: int,
-               ):
+               ) -> None:
     video_path = Path(video_path)
     video_save_dir = Path(video_save_dir)
     video_save_dir.mkdir(exist_ok=True, parents=True)
@@ -89,7 +91,7 @@ def concat_videos(videos_path: List[str],
                   video_save_path: str,
                   layout: Optional[Tuple[int, int]] = None,
                   videos_title: Optional[List[str]] = None,
-                  ):
+                  ) -> None:
     assert videos_path, 'Videos path list must not be None!'
 
     if layout is None:
@@ -143,3 +145,19 @@ def concat_videos(videos_path: List[str],
             big_frame[col * frame_height: (col + 1) * frame_height, row * frame_width:(row + 1) * frame_width,
             :] = frame
         video_writer.write(big_frame.astype(np.uint8))
+
+ 
+def remove_labels_without_images(images_dir: str,
+                                 labels_dir: str, 
+                                ) -> None:
+    images_dir = Path(images_dir)
+    labels_dir = Path(labels_dir)
+
+    images_path = list(images_dir.glob('*.jpg'))
+    images_stem = [img_path.stem for img_path in images_path]
+    labels_path = labels_dir.glob('*.txt')
+    for _, lbl_path in enumerate(labels_path):
+        lbl_stem = lbl_path.stem
+        if lbl_stem not in images_stem:
+            os.remove(str(lbl_path))
+            
