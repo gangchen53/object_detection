@@ -1,4 +1,6 @@
 import os
+import shutil
+import random
 from pathlib import Path
 from typing import Optional, List, Tuple
 
@@ -161,3 +163,34 @@ def remove_labels_without_images(images_dir: str,
         if lbl_stem not in images_stem:
             os.remove(str(lbl_path))
             
+            
+def assign_labeling_tasks(images_dir: str,
+                          labels_dir: str,
+                          save_dir: str,
+                          people_list: List[str],
+                          ) -> None:
+    images_dir = Path(images_dir)
+    labels_dir = Path(labels_dir)
+    save_dir = Path(save_dir)
+    save_dir.mkdir(exist_ok=True, parents=True)
+
+    images_path = list(images_dir.glob('*.jpg'))
+    k = len(images_path) // len(people_list)
+
+    random.shuffle(images_path)
+    for i, person_name in enumerate(people_list):
+        person_images_dir = save_dir / person_name / 'images'
+        person_labels_dir = save_dir / person_name / 'labels'
+        person_images_dir.mkdir(exist_ok=True, parents=True)
+        person_labels_dir.mkdir(exist_ok=True, parents=True)
+
+        images_origin_path = images_path[i * k:(i + 1) * k]
+        images_save_path = [person_images_dir / img_path.name for img_path in images_origin_path]
+        labels_origin_path = [labels_dir / (img_path.stem + '.txt') for img_path in images_origin_path]
+        labels_save_path = [person_labels_dir / lbl_path.name for lbl_path in labels_origin_path]
+
+        for _, (img_origin_path, img_save_path) in enumerate(zip(images_origin_path, images_save_path)):
+            shutil.copy(str(img_origin_path), str(img_save_path))
+
+        for _, (lbl_origin_path, lbl_save_path) in enumerate(zip(labels_origin_path, labels_save_path)):
+            shutil.copy(str(lbl_origin_path), str(lbl_save_path))
