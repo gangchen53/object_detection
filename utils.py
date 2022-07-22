@@ -2,7 +2,7 @@ import os
 import shutil
 import random
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 
 import cv2
 import numpy as np
@@ -212,3 +212,23 @@ def assign_labeling_tasks(images_dir: str,
 
         for _, (lbl_origin_path, lbl_save_path) in enumerate(zip(labels_origin_path, labels_save_path)):
             shutil.copy(str(lbl_origin_path), str(lbl_save_path))
+            
+
+def calculate_number_of_categories(labels_dir: str,
+                                   classes_name: Dict[int, str],
+                                   ) -> None:
+    labels_dir = Path(labels_dir)
+    labels_path = labels_dir.glob('*.txt')
+
+    classes_counter = []
+    for _, lbl_path in enumerate(labels_path):
+        bboxes = np.loadtxt(str(lbl_path))
+        if bboxes.ndim == 1:
+            bboxes = bboxes[np.newaxis, :]
+        if bboxes.size > 0:
+            classes_counter.extend(bboxes[:, 0].astype(np.uint8).tolist())
+
+    classes_statistics = Counter(classes_counter)
+    for class_id, class_number in classes_statistics.items():
+        class_name = classes_name[class_id]
+        print(f'{class_name}: {class_number}')
