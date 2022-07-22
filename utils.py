@@ -164,6 +164,23 @@ def remove_labels_without_images(images_dir: str,
         if lbl_stem not in images_stem:
             os.remove(str(lbl_path))
             
+        
+def remove_images_without_labels(images_dir: str,
+                                 labels_dir: str,
+                                ) -> None:
+    images_dir = Path(images_dir)
+    labels_dir = Path(labels_dir)
+
+    labels_path = list(labels_dir.glob('*.txt'))
+    labels_stem = [lbl_path.stem for lbl_path in labels_path]
+
+    images_path = images_dir.glob('*.jpg')
+    for _, img_path in enumerate(images_path):
+        img_stem = img_path.stem
+        if img_stem not in labels_stem:
+            print(str('-') * 16, f' delete {img_path.name} ', str('-') * 16)
+            os.remove(str(img_path))       
+            
             
 def assign_labeling_tasks(images_dir: str,
                           labels_dir: str,
