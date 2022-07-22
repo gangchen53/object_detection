@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional, List, Tuple
 
 import cv2
+import numpy as np
 from tqdm import tqdm
 
 
